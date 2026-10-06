@@ -10,10 +10,20 @@
       </template>
 
       <div class="user-bar">
-        <el-avatar :size="56" :src="form.avatar">{{ form.name?.[0] }}</el-avatar>
+        <el-upload
+          class="avatar-upload"
+          :show-file-list="false"
+          :auto-upload="false"
+          accept="image/*"
+          :on-change="onAvatarChange"
+        >
+          <el-avatar :size="72" :src="form.avatar">{{ form.name?.[0] }}</el-avatar>
+          <div class="avatar-tip">点击更换头像</div>
+        </el-upload>
         <div>
           <div class="u-name">{{ form.name || '未设置' }}</div>
           <div class="u-account">学号/工号：{{ form.account }}</div>
+          <el-tag v-if="form.role === 'admin'" size="small" type="warning" class="role-tag">管理员</el-tag>
         </div>
       </div>
 
@@ -25,14 +35,18 @@
           <el-input v-model="form.college" />
         </el-form-item>
         <el-form-item label="手机号">
-          <el-input v-model="form.phone" maxlength="11" />
+          <el-input v-model="form.phone" maxlength="11" placeholder="选填" />
         </el-form-item>
         <el-form-item label="邮箱">
-          <el-input v-model="form.email" />
+          <el-input v-model="form.email" placeholder="选填" />
         </el-form-item>
-        <el-form-item label="公开联系方式">
-          <el-switch v-model="form.show_contact" />
-          <span class="hint">关闭时他人只能看到脱敏号码（如 138****0000）</span>
+        <el-form-item label="公开手机号">
+          <el-switch v-model="form.show_phone" />
+          <span class="hint">关闭时他人看到 138****0000</span>
+        </el-form-item>
+        <el-form-item label="公开邮箱">
+          <el-switch v-model="form.show_email" />
+          <span class="hint">关闭时他人看到 l***i@xx.com</span>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="saving" @click="saveProfile">保存修改</el-button>
@@ -89,7 +103,9 @@ const form = reactive({
   phone: '',
   email: '',
   avatar: '',
-  show_contact: false
+  role: 'user',
+  show_phone: false,
+  show_email: false
 })
 
 const pwd = reactive({ old_password: '', new_password: '', confirm: '' })
@@ -117,9 +133,23 @@ onMounted(async () => {
   if (me) Object.assign(form, me)
 })
 
+// 头像：当前为本地预览。等许世杰 /api/upload 接口好后，
+// 把这里改成先上传、拿到返回的 url 再赋给 form.avatar，并在保存时一并提交。
+function onAvatarChange(file) {
+  if (file.raw) form.avatar = URL.createObjectURL(file.raw)
+}
+
 async function saveProfile() {
   if (!form.name || form.name.length < 2) {
     ElMessage.warning('姓名至少 2 个字')
+    return
+  }
+  if (form.phone && !/^\d{11}$/.test(form.phone)) {
+    ElMessage.warning('手机号需为 11 位数字')
+    return
+  }
+  if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    ElMessage.warning('邮箱格式不正确')
     return
   }
   saving.value = true
@@ -129,7 +159,8 @@ async function saveProfile() {
       college: form.college,
       phone: form.phone,
       email: form.email,
-      show_contact: form.show_contact
+      show_phone: form.show_phone,
+      show_email: form.show_email
     })
     await userStore.fetchMe()
     ElMessage.success('保存成功')
@@ -172,8 +203,16 @@ async function savePassword() {
 .user-bar {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   margin-bottom: 20px;
+}
+.avatar-upload {
+  text-align: center;
+}
+.avatar-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 6px;
 }
 .u-name {
   font-size: 18px;
@@ -183,6 +222,9 @@ async function savePassword() {
   color: #909399;
   font-size: 13px;
   margin-top: 4px;
+}
+.role-tag {
+  margin-top: 6px;
 }
 .hint {
   margin-left: 10px;
