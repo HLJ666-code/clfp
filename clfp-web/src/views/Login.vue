@@ -28,6 +28,9 @@
             show-password
           />
         </el-form-item>
+        <div class="form-options">
+          <el-checkbox v-model="remember">记住账号</el-checkbox>
+        </div>
         <el-form-item>
           <el-button
             type="primary"
@@ -49,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -62,12 +65,19 @@ const userStore = useUserStore()
 
 const formRef = ref()
 const loading = ref(false)
+const remember = ref(true)
 const form = reactive({ account: '', password: '' })
 
 const rules = {
   account: [{ required: true, message: '请输入学号/工号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
+
+// 读取上次记住的账号
+onMounted(() => {
+  const saved = localStorage.getItem('clfp_remember_account')
+  if (saved) form.account = saved
+})
 
 async function onSubmit() {
   await formRef.value.validate(async (valid) => {
@@ -76,12 +86,15 @@ async function onSubmit() {
     try {
       const res = await loginApi({ ...form })
       localStorage.setItem('clfp_token', res.access_token)
+      // 记住账号处理
+      if (remember.value) localStorage.setItem('clfp_remember_account', form.account)
+      else localStorage.removeItem('clfp_remember_account')
       userStore.setUser(res.user)
       ElMessage.success('登录成功')
       const redirect = route.query.redirect || '/'
       router.push(redirect)
     } catch (e) {
-      // 错误提示已由拦截器统一处理
+      // 错误提示已由拦截器统一处理（含锁定剩余时间）
     } finally {
       loading.value = false
     }
@@ -115,6 +128,9 @@ async function onSubmit() {
   color: #909399;
   margin: 8px 0 28px;
   font-size: 13px;
+}
+.form-options {
+  margin: -4px 0 12px;
 }
 .submit {
   width: 100%;

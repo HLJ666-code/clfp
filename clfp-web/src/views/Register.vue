@@ -29,6 +29,15 @@
             show-password
           />
         </el-form-item>
+        <div v-if="form.password" class="pwd-strength">
+          <el-progress
+            :percentage="strengthInfo.percent"
+            :color="strengthInfo.color"
+            :show-text="false"
+            :stroke-width="6"
+          />
+          <span class="pwd-text" :style="{ color: strengthInfo.color }">{{ strengthInfo.text }}</span>
+        </div>
         <el-form-item prop="confirm">
           <el-input
             v-model="form.confirm"
@@ -54,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Lock, Phone, Message, School, Postcard } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -74,6 +83,24 @@ const form = reactive({
   confirm: ''
 })
 
+// 密码强度评估
+const strengthInfo = computed(() => {
+  const pw = form.password
+  if (!pw) return { percent: 0, color: '#dcdfe6', text: '' }
+  let score = 0
+  if (pw.length >= 8) score++
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++
+  if (/\d/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  const map = [
+    { percent: 25, color: '#f56c6c', text: '弱' },
+    { percent: 50, color: '#e6a23c', text: '一般' },
+    { percent: 75, color: '#409eff', text: '较强' },
+    { percent: 100, color: '#67c23a', text: '强' }
+  ]
+  return map[Math.max(0, score - 1)]
+})
+
 const validateConfirm = (rule, value, callback) => {
   if (value !== form.password) callback(new Error('两次输入的密码不一致'))
   else callback()
@@ -88,7 +115,7 @@ const validateEmail = (rule, value, callback) => {
 const rules = {
   account: [
     { required: true, message: '请输入学号/工号', trigger: 'blur' },
-    { min: 4, max: 12, message: '长度 4~12 位', trigger: 'blur' }
+    { min: 4, max: 20, message: '长度 4~20 位', trigger: 'blur' }
   ],
   name: [
     { required: true, message: '请输入真实姓名', trigger: 'blur' },
@@ -157,6 +184,19 @@ async function onSubmit() {
   color: #909399;
   margin: 8px 0 24px;
   font-size: 13px;
+}
+.pwd-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -6px 0 14px;
+}
+.pwd-strength .el-progress {
+  flex: 1;
+}
+.pwd-text {
+  font-size: 12px;
+  width: 28px;
 }
 .submit {
   width: 100%;

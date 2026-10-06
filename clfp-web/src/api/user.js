@@ -8,4 +8,6 @@ export const changePassword = (data) => request.post('/api/user/change-password'
 
 export const getMyItems = (params) => request.get('/api/item/mine', { params })
 
+export const getMyStats = () => request.get('/api/user/me/stats')
+
 export const getContact = (userId) => request.get(`/api/user/contact/${userId}`)
