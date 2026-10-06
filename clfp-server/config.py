@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # DATABASE_URL=mysql+pymysql://root:你的密码@localhost:3306/clfp_biz?charset=utf8mb4
     database_url: str = "sqlite:///./clfp.db"
 
-    jwt_secret: str = "clfp-dev-secret-please-change"
+    jwt_secret: str = "clfp-dev-secret-please-change-in-prod-2026-09"  # 生产请用 .env 覆盖
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 天
 

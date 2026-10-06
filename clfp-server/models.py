@@ -28,7 +28,8 @@ class User(Base):
     status: Mapped[str] = mapped_column(String(10), default="active")  # active / locked / disabled
     fail_count: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    show_contact: Mapped[bool] = mapped_column(Boolean, default=False)  # 是否授权公开联系方式
+    show_phone: Mapped[bool] = mapped_column(Boolean, default=False)  # 授权公开手机号
+    show_email: Mapped[bool] = mapped_column(Boolean, default=False)  # 授权公开邮箱
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 
